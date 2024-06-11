@@ -16,6 +16,21 @@ app.get("/products", async (req, res) => {
   res.send(products);
 });
 
+app.get("/products/:id", async (req, res) => {
+  const { id } = req.params;
+  const product = await prisma.product.findUnique({
+    where: {
+      id: Number(id),
+    },
+  });
+  if (!product) {
+    return res.status(404).send({
+      message: "Product not found",
+    });
+  }
+  res.send(product);
+});
+
 app.post("/products", async (req, res) => {
   const newProductData = req.body;
 
