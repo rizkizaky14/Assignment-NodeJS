@@ -9,10 +9,6 @@ const PORT = process.env.PORT;
 
 app.use(express.json());
 
-app.get("/api", (req, res) => {
-  res.send("Hello World!");
-});
-
 app.get("/products", async (req, res) => {
   const products = await prisma.product.findMany();
 
@@ -39,21 +35,35 @@ app.post("/products", async (req, res) => {
 const updateProduct = async (req, res) => {
   const { id } = req.params;
   const { name, price, desc, image } = req.body;
-  const product = await prisma.product.update({
-    where: {
-      id: Number(id),
-    },
-    data: {
-      name,
-      price,
-      desc,
-      image,
-    },
-  });
-  res.send({
-    data: product,
-    message: "Product updated successfully",
-  });
+  if (!name || !price || !desc || !image) {
+    res.status(400).send({
+      message: "Missing required fields",
+    });
+    return;
+  }
+
+  try {
+    const product = await prisma.product.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        name,
+        price,
+        desc,
+        image,
+      },
+    });
+    res.send({
+      data: product,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: "Error updating product",
+      error: error.message,
+    });
+  }
 };
 
 app.put("/products/:id", updateProduct);
