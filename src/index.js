@@ -1,13 +1,14 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const { PrismaClient } = require("@prisma/client");
-
 const prisma = new PrismaClient();
 const app = express();
+
 dotenv.config();
 const PORT = process.env.PORT;
-
-app.use(express.json());
+app.use(bodyParser.json());
+// app.use(express.json());
 
 app.get("/products", async (req, res) => {
   const products = await prisma.product.findMany();
@@ -32,10 +33,11 @@ app.post("/products", async (req, res) => {
   });
 });
 
-const updateProduct = async (req, res) => {
+const updateProductHandler = async (req, res, requireAllFields) => {
   const { id } = req.params;
   const { name, price, desc, image } = req.body;
-  if (!name || !price || !desc || !image) {
+
+  if (requireAllFields && (!name || !price || !desc || !image)) {
     res.status(400).send({
       message: "Missing required fields",
     });
@@ -66,7 +68,15 @@ const updateProduct = async (req, res) => {
   }
 };
 
+const updateProduct = (req, res) => {
+  updateProductHandler(req, res, true);
+};
+
+const patchProduct = (req, res) => {
+  updateProductHandler(req, res, false);
+};
 app.put("/products/:id", updateProduct);
+app.patch("/products/:id", patchProduct);
 
 app.delete("/products/:id", async (req, res) => {
   const { id } = req.params;
